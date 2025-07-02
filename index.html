@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Gesture Cricket Game</title>
   <style>
     body {
@@ -27,30 +27,37 @@
 </head>
 <body>
   <h1>Gesture-Based Cricket Game</h1>
-  <video id="videoElement" autoplay playsinline style="display: none;"></video>
+  <video id="videoElement" autoplay playsinline style="display:none;"></video>
   <canvas id="canvasElement" width="640" height="480"></canvas>
 
   <!-- MediaPipe & Drawing Utils -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-  <script src="odd_even.js"></script>
-
 
   <script>
-    let videoElement = document.getElementById('videoElement');
-    let canvasElement = document.getElementById('canvasElement');
-    let canvasCtx = canvasElement.getContext('2d');
+    const videoElement = document.getElementById("videoElement");
+    const canvasElement = document.getElementById("canvasElement");
+    const canvasCtx = canvasElement.getContext("2d");
 
-    let gameState = {
-      stage: 'start',
+    // Explicitly request webcam permission
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        videoElement.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Webcam access denied:", err);
+      });
+
+    const gameState = {
+      stage: "start",
       userChoice: null,
       tossResult: null,
       batting: null,
       firstInningsScore: null,
       secondInningsScore: null,
       target: null,
-      currentPlayer: 'user'
+      currentPlayer: "user"
     };
 
     let fingerCount = 0;
@@ -91,11 +98,13 @@
     function detectFingers(landmarks) {
       const tipIds = [4, 8, 12, 16, 20];
       let count = 0;
-      if (landmarks[4].y < landmarks[3].y &&
-          landmarks[8].y > landmarks[6].y &&
-          landmarks[12].y > landmarks[10].y &&
-          landmarks[16].y > landmarks[14].y &&
-          landmarks[20].y > landmarks[18].y) {
+      if (
+        landmarks[4].y < landmarks[3].y &&
+        landmarks[8].y > landmarks[6].y &&
+        landmarks[12].y > landmarks[10].y &&
+        landmarks[16].y > landmarks[14].y &&
+        landmarks[20].y > landmarks[18].y
+      ) {
         return 6;
       } else {
         if (landmarks[4].x < landmarks[3].x) count++;
@@ -108,21 +117,21 @@
     }
 
     function drawLandmarks(ctx, landmarks) {
-      ctx.strokeStyle = '#0f0';
+      ctx.strokeStyle = "#0f0";
       ctx.lineWidth = 2;
       for (let i = 0; i < landmarks.length; i++) {
         const x = landmarks[i].x * canvasElement.width;
         const y = landmarks[i].y * canvasElement.height;
         ctx.beginPath();
         ctx.arc(x, y, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = '#0ff';
+        ctx.fillStyle = "#0ff";
         ctx.fill();
       }
     }
 
     function drawGameState() {
-      canvasCtx.font = '20px Arial';
-      canvasCtx.fillStyle = 'yellow';
+      canvasCtx.font = "20px Arial";
+      canvasCtx.fillStyle = "yellow";
       canvasCtx.fillText(`Fingers: ${fingerCount}`, 20, 460);
       canvasCtx.fillText(`Stage: ${gameState.stage}`, 20, 480);
     }
