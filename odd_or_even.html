@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hand Cricket Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <style>
+    body { margin: 0; font-family: Arial; background: #111; color: #fff; text-align: center; }
+    video, canvas { display: block; margin: 0 auto; }
+    #overlayText { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); font-size: 24px; color: yellow; }
+    #scoreBoard { margin-top: 10px; font-size: 20px; color: cyan; }
+  </style>
+</head>
+<body>
+  <h1>🖐️ Hand Gesture Cricket Game</h1>
+  <video id="video" width="640" height="480" autoplay muted></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+  <div id="overlayText">Show a gesture (1 to 6 fingers)</div>
+  <div id="scoreBoard">Your Score: 0</div>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const overlayText = document.getElementById('overlayText');
+    const scoreBoard = document.getElementById('scoreBoard');
+
+    let score = 0;
+
+    function countFingers(landmarks) {
+      if (!landmarks) return 0;
+      const tips = [8, 12, 16, 20]; // Index to pinky
+      let count = 0;
+      for (let i = 0; i < tips.length; i++) {
+        if (landmarks[tips[i]].y < landmarks[tips[i] - 2].y) {
+          count++;
+        }
+      }
+      return count;
+    }
+
+    const hands = new Hands({
+      locateFile: file => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    hands.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
+
+    hands.onResults(results => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(results.image, 0, 0, canvas.width, canvas.height);
+
+      if (results.multiHandLandmarks.length > 0) {
+        const count = countFingers(results.multiHandLandmarks[0]);
+        overlayText.innerText = `Detected: ${count}`;
+        if (count > 0) {
+          score += count;
+          scoreBoard.innerText = `Your Score: ${score}`;
+        }
+      } else {
+        overlayText.innerText = "Show a gesture (1 to 6 fingers)";
+      }
+    });
+
+    const camera = new Camera(video, {
+      onFrame: async () => {
+        await hands.send({ image: video });
+      },
+      width: 640,
+      height: 480
+    });
+    camera.start();
+  </script>
+</body>
+</html>
